@@ -1,5 +1,5 @@
 // 🔥 替换为你自己的 Vercel 部署域名！
-const API_URL = "https://text-storage-server.vercel.app "; // ← 修改这里！
+const API_URL = "https://text-storage-topaz.vercel.app ";// ← 修改这里！
 
 const messageDisplay = document.getElementById("message-display");
 const messageInput = document.getElementById("message-input");
