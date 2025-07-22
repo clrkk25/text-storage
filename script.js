@@ -1,63 +1,58 @@
-// 🔥 替换为你自己的 Vercel 部署域名！
-const API_URL = "https://text-storage-topaz.vercel.app ";// ← 修改这里！
+// 初始化 Supabase 客户端
+const SUPABASE_URL = "https://https://jdaubdmyutkrpdyetxbz.supabase.co-project-id.supabase.co "; // ← 替换为你的 URL
+const SUPABASE_ANON_KEY = "your-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpkYXViZG15dXRrcnBkeWV0eGJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMxNTk5NTAsImV4cCI6MjA2ODczNTk1MH0.rXZ4f1u3n4PvZJtWD6XMwd_74zfYaBs8DTsErozZz8M-public-key";         // ← 替换为你的 anon key
+
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const messageDisplay = document.getElementById("message-display");
 const messageInput = document.getElementById("message-input");
 const saveBtn = document.getElementById("save-btn");
 
-// 加载消息
+// 加载最新的一条消息
 async function loadMessage() {
   try {
-    const response = await fetch(`${API_URL}/api/message`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    messageDisplay.textContent = data.message || "暂无保存的消息";
+    const { data, error } = await supabase
+      .from("messages")
+      .select("content")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      messageDisplay.textContent = data[0].content;
+    } else {
+      messageDisplay.textContent = "暂无保存的消息";
+    }
   } catch (error) {
     console.error("加载失败:", error);
-    messageDisplay.textContent = "❌ 加载消息失败，请刷新重试。";
+    messageDisplay.textContent = "加载消息失败";
   }
 }
 
 // 保存消息
 async function saveMessage() {
   const message = messageInput.value.trim();
-  if (!message) {
-    alert("请输入内容！");
-    return;
-  }
-
-  // 防重复点击
-  saveBtn.disabled = true;
-  saveBtn.textContent = "⏳ 保存中...";
+  if (!message) return;
 
   try {
-    const response = await fetch(`${API_URL}/api/message`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message }),
-    });
+    const { error } = await supabase
+      .from("messages")
+      .insert([{ content: message }]);
 
-    if (response.ok) {
-      alert("✅ 保存成功！");
-      messageInput.value = "";
-      loadMessage(); // 实时更新显示
-    } else {
-      const err = await response.json().catch(() => ({}));
-      alert("❌ 保存失败：" + (err.error || "未知错误"));
-    }
+    if (error) throw error;
+
+    alert("✅ 保存成功！");
+    messageInput.value = "";
+    loadMessage(); // 刷新显示
   } catch (error) {
-    console.error("请求异常:", error);
-    alert("网络错误，请检查控制台");
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = "💾 保存";
+    console.error("保存失败:", error);
+    alert("❌ 保存失败：" + error.message);
   }
 }
 
 // 绑定事件
 saveBtn.addEventListener("click", saveMessage);
 
-// 初始化
+// 初始化加载
 loadMessage();
